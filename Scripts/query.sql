@@ -133,3 +133,41 @@ INNER JOIN inventory i
 on s.inventoryId = i.inventoryId
 where i.modelId in ( SELECT ModelId FROM model where EngineType = 'Electric');
 
+SELECT  A.firstName , A.lastName, M.model, B.salesAmount, count(M.model) as NumberSold, 
+   RANK() OVER (
+PARTITION BY A.employeeId 	ORDER BY  count(M.model) DESC)as rankM
+FROM employee A 
+inner join sales B ON ( A.employeeId = B.employeeId)
+inner JOIN inventory I ON( B.inventoryId = I.inventoryId)
+INNER JOIN model M ON( I.modelId = M.modelId) 
+WHERE  A.title = 'Sales Person'
+GROUP BY  A.firstName , A.lastName, M.model
+
+;
+with CTE as(
+SELECT     
+    strftime('%Y', A.soldDate) as soldYear,
+    strftime('%m', A.soldDate) as soldMonth,
+    sum(A.salesAmount) as salesAmount
+ 
+FROM
+    sales A
+GROUP BY soldYear,soldMonth)
+--ORDER BY soldYear,soldMonth;
+SELECT soldYear,soldMonth, salesAmount,
+   SUM(salesAmount) OVER ( PARTITION BY soldYear
+        ORDER BY soldYear,soldMonth)As  AnnualSales_RunningTotal
+FROM CTE
+ORDER BY soldYear,soldMonth;
+
+
+
+SELECT     
+    strftime('%Y-%m', A.soldDate) as MonthSold,
+    Count(*) as NumberCarsSold,
+    LAG (count(*), 1,0) OVER calMonth As LastMonthCarsSold 
+FROM
+    sales A
+GROUP BY strftime('%Y-%m', A.soldDate)
+WINDOW calMonth As (ORDER BY strftime('%Y-%m', A.soldDate))
+ORDER BY strftime('%Y-%m', A.soldDate)

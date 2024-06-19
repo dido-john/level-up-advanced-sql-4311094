@@ -126,3 +126,10 @@ FROM MonthlySales21
 GROUP BY FN, LN
 ORDER BY LN, FN;
 
+
+SELECT s.soldDate, s.salesAmount, i.colour, i.year
+FROM sales s 
+INNER JOIN inventory i 
+on s.inventoryId = i.inventoryId
+where i.modelId in ( SELECT ModelId FROM model where EngineType = 'Electric');
+
